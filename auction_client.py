@@ -11,17 +11,16 @@ PORT = 8888
 class Client:
     def __init__(self):
         self.connected = False
-        self.id = uuid.uuid4()
+        self.id = str(uuid.uuid4())
         self.name = None
         self.current_auction = None
 
     def run(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        with self.socket:
-            self.gui = auction_client_gui.MainMenuWindow(self)
-            self.gui.show()
-            self.socket.connect((HOST, PORT))
-            self.connected = True
+        self.socket.connect((HOST, PORT))
+        self.connected = True
+        self.gui = auction_client_gui.MainMenuWindow(self)
+        self.gui.show()
 
     def join_auction(self, auction_id: str):
         if not self.connected:
@@ -38,7 +37,7 @@ class Client:
                        "auction_id": self.current_auction
                        }
                    },
-            self.socket.sendall(bytes(json.dumps(msg).encode("utf-8")))
+            self.socket.sendall(json.dumps(msg).encode("utf-8"))
 
         msg = { 
                "sender": "client",
@@ -51,7 +50,7 @@ class Client:
                    "auction_id": auction_id
                    }
                },
-        self.socket.sendall(bytes(json.dumps(msg).encode("utf-8")))
+        self.socket.sendall(json.dumps(msg).encode("utf-8"))
 
     def process_msg(self, msg_bytes: bytes):
         msg = json.loads(msg_bytes.decode("utf-8"))

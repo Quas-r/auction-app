@@ -1,28 +1,39 @@
 from socket import socket
 import json
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 class AuctionConnectionManager(object):
     def __init__(self):
+        self.clients: List[Tuple[socket, Tuple[str, int]]] = []
         self.auction_connections: Dict[str, List[socket]] = {}
 
-    def connect(self, socket, auction_id):
+#     def connect_client_to_server(self, conn: socket, addr: Tuple[str, int]):
+#         if (conn, addr) not in self.clients:
+#             self.clients.append((conn, addr))
+# 
+#     def disconnect_client_from_server(self, conn: socket, addr: Tuple[str, int]):
+#         # if conn not in self.clients:
+#         #     return
+#         self.clients.remove((conn, addr))
+#         conn.close()
+
+    def connect_client_to_auction(self, conn: socket, auction_id):
         if not self.auction_connections.get(auction_id):
             self.auction_connections[auction_id] = []
-        self.auction_connections[auction_id].append(socket)
+        self.auction_connections[auction_id].append(conn)
 
-    def disconnect(self, socket, auction_id):
+    def disconnect_client_from_auction(self, conn: socket, auction_id):
         if not self.auction_connections.get(auction_id):
             return
-        # if socket not in self.auction_connections[auction_id]:
+        # if conn not in self.auction_connections[auction_id]:
         #     return
-        self.auction_connections[auction_id].remove(socket)
+        self.auction_connections[auction_id].remove(conn)
     
     def broadcast_to_bidders(self, msg: bytes, auction_id):
         if not self.auction_connections.get(auction_id):
             return
-        for conn in self.auction_connections[auction_id]:
-            conn.sendall(msg)
+        for s in self.auction_connections[auction_id]:
+            s.sendall(msg)
 
 class User(object):
     def __init__(self, name: str, id: str, address: tuple[str, int]):

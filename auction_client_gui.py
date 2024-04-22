@@ -1,10 +1,34 @@
+import sys
+from typing import Optional
 from auction_client import Client
-from PyQt5.QtWidgets import QTextEdit, QLineEdit, QWidget, QVBoxLayout, QPushButton, QListWidget, QMessageBox, QLabel
+from PyQt5.QtWidgets import QTextEdit, QDialog, QDialogButtonBox, QLineEdit, QWidget, QVBoxLayout, QPushButton, QListWidget, QMessageBox, QLabel
+from PyQt5 import QtGui
+
+class UsernameDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Enter Username")
+        self.username_label = QLabel("Username:")
+        self.username_input = QLineEdit()
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.username_label)
+        layout.addWidget(self.username_input)
+        layout.addWidget(self.buttons)
+        self.setLayout(layout)
+
+    def get_username(self) -> str:
+        return self.username_input.text()
 
 class AuctionWindow(QWidget):
-    def __init__(self, auction_id, owner, item_name, starting_price, bids, deadline, open, buyer):
+    def __init__(self, client, auction_id, owner, item_name, starting_price, bids, deadline, open, buyer):
         super().__init__()
         self.setWindowTitle("Auction")
+        self.client = client
         self.auction_id = auction_id
         self.owner = owner
         self.item_name = item_name
@@ -24,8 +48,9 @@ class AuctionWindow(QWidget):
         self.start_price_label = QLabel("Starting Price: $" + str(self.starting_price))
         layout.addWidget(self.start_price_label)
 
-        self.deadline = QLabel("Deadline: " + self.deadline)
-        layout.addWidget(self.deadline)
+        if self.deadline:
+            self.deadline = QLabel("Deadline: " + self.deadline)
+            layout.addWidget(self.deadline)
 
         bids_str = ""
         for bid in self.bids:
@@ -47,6 +72,7 @@ class AuctionWindow(QWidget):
 
         self.setLayout(layout)
 
+
     # To-do: Not implemented
     def send_bid(self):
         bid_amount = self.bid_amount_input.text()
@@ -57,6 +83,10 @@ class AuctionWindow(QWidget):
         else:
             QMessageBox.warning(self, "Error", "Please enter a bid amount.")
 
+    def closeEvent(self, a0: Optional[QtGui.QCloseEvent]) -> None:
+        self.client.leave_auction()
+
+
 class MainMenuWindow(QWidget):
     def __init__(self, client: Client):
         super().__init__()
@@ -64,6 +94,11 @@ class MainMenuWindow(QWidget):
         self.setWindowTitle("Main Menu")
         self.init_ui()
         self.auction_window = None
+        name = self.get_username()
+        if not name:
+            sys.exit()
+        self.client.name = name
+        self.client.auction_signal.connect(self.set_auction)
 
     def init_ui(self):
         layout = QVBoxLayout()
@@ -87,6 +122,14 @@ class MainMenuWindow(QWidget):
         for auction_id in self.auctions:
             self.auction_list.addItem(auction_id)
 
+    def get_username(self):
+        dialog = UsernameDialog()
+        if dialog.exec_():
+            return dialog.get_username()
+
+    def update_auction_list(self, data):
+        self.auctions = data
+
     # To-do: Not implemented
     def start_auction(self):
         # Placeholder for starting an auction
@@ -102,13 +145,6 @@ class MainMenuWindow(QWidget):
         else:
             QMessageBox.warning(self, "Error", "No auction selected. Please select an auction to join.")
 
-    def set_auction(self, auction_id, owner, item_name, starting_price, bids, deadline, open, buyer):
-        self.auction_window = AuctionWindow(auction_id, owner, item_name, starting_price, bids, deadline, open, buyer)
+    def set_auction(self, data):
+        self.auction_window = AuctionWindow(self.client, **data)
         self.auction_window.show()
-
-# if __name__ == "__main__":
-#     app = QApplication(sys.argv)
-#     main_menu = MainMenuWindow()
-#     main_menu.show()
-#     sys.exit(app.exec_())
-

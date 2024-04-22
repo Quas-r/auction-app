@@ -59,10 +59,28 @@ class Client(QObject):
                },
         self.socket.sendall(json.dumps(msg).encode("utf-8"))
 
+    def send_bid(self, auction_id, amount):
+        msg = { 
+               "sender": "client",
+               "msg_type": "send_bid",
+               "content": {
+                   "auction_id": auction_id,
+                   "bidder": {
+                       "name": self.name,
+                       "id": self.id,
+                       },
+                   "amount": amount
+                   }
+               }
+        self.socket.sendall(json.dumps(msg).encode("utf-8"))
+
     def listen_to_server(self):
         while True:
             print("Waiting to recieve...")
-            msg_bytes = self.socket.recv(1024)
+            try:
+                msg_bytes = self.socket.recv(1024)
+            except:
+                break
             if not msg_bytes:
                 break
             print(msg_bytes.decode("utf-8"))
@@ -74,6 +92,9 @@ class Client(QObject):
             if msg["msg_type"] == "auction_info":
                 self.auction_signal.emit(content)
                 self.current_auction = content["auction_id"]
+
+    def close(self):
+        self.socket.close()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

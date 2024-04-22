@@ -5,8 +5,7 @@ The app uses PyQt5 and Python sockets to implement an auction system.
 It is not that complex of an application, however, it showcases some
 fundamental methods that can be used to create such a system.
 
-This version does **NOT** work as of yet, because there isn't even
-a server implementation yet.
+This version does **NOT** work yet!!!
 
 In order to run the app, first run
 `pip install -r requirements.txt` 

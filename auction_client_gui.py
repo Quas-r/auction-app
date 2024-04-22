@@ -54,7 +54,7 @@ class AuctionWindow(QWidget):
 
         bids_str = ""
         for bid in self.bids:
-            bids_str = bids_str + bid["bidder"] + ": " + str(bid["amount"] + "\n")
+            bids_str = bids_str + bid["bidder"] + ": " + str(bid["amount"]) + "<br/>"
         self.bid_history_textedit = QTextEdit(bids_str)
         self.bid_history_textedit.setReadOnly(True)
         layout.addWidget(self.bid_history_textedit)
@@ -77,9 +77,13 @@ class AuctionWindow(QWidget):
     def send_bid(self):
         bid_amount = self.bid_amount_input.text()
         if bid_amount:
-            # To-do: Send bid over the network
-            QMessageBox.information(self, "Bid Sent", f"Bid of ${bid_amount} sent successfully!")
-            self.bid_amount_input.clear()  # Clear the bid amount input after sending the bid
+            try:
+                bid_amount = float(bid_amount)
+                self.client.send_bid(self.auction_id, bid_amount)
+                self.bid_amount_input.clear()  # Clear the bid amount input after sending the bid
+            except:
+                QMessageBox.warning(self, "Error", "Please enter a number.")
+                self.bid_amount_input.clear()  # Clear the bid amount
         else:
             QMessageBox.warning(self, "Error", "Please enter a bid amount.")
 
@@ -146,5 +150,11 @@ class MainMenuWindow(QWidget):
             QMessageBox.warning(self, "Error", "No auction selected. Please select an auction to join.")
 
     def set_auction(self, data):
+        pos = self.auction_window.pos() if self.auction_window else self.pos()
         self.auction_window = AuctionWindow(self.client, **data)
         self.auction_window.show()
+        self.auction_window.move(pos)
+
+    def closeEvent(self, a0: Optional[QtGui.QCloseEvent]) -> None:
+        self.client.close()
+        sys.exit()

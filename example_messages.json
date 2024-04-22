@@ -37,7 +37,6 @@
         "sender": "client",
         "msg_type": "create_auction",
         "content": {
-            "auction_id": "c0803840-7ce1-4209-98b4-2d7c60245053",
             "owner": {
                 "name": "Test",
                 "id": "be906608-f741-4733-ae2e-e35b1707b286",
@@ -45,6 +44,14 @@
             "item_name": "Test Item",
             "starting_price": 100.0,
             "deadline": 1,
+        }
+    },
+    { 
+        "sender": "client",
+        "msg_type": "close_auction",
+        "content": {
+            "owner_id": "5fe5e56a-3003-4efe-8b9c-dadd1bcebe03",
+            "auction_id": "f33605cf-cc49-470c-b7d6-2b97b08538da"
         }
     },
     { 
@@ -80,11 +87,7 @@
     },
     {
         "sender": "server",
-        "msg_type": "notify_bid",
-        "content": {
-            "auction_id": "c0803840-7ce1-4209-98b4-2d7c60245053",
-            "bidder": "Test",
-            "amount": 140.0
-        }
+        "msg_type": "update_auction_list",
+        "content": [{ "Auction 1":  "c0803840-7ce1-4209-98b4-2d7c60245053" }]
     }
 ]
